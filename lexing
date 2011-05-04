@@ -1,0 +1,79 @@
+CCScript 2
+Lexical Structure
+-----------------
+
+The aim here is to keep the lexical structure of the language as simple as is
+reasonably possible, while still being expressive: the language will support
+syntax extension, but not lexical extension, so custom syntax will inherit any
+limitations of the lexer.
+
+However, one important exception to the "no lexical extension" rule: it should
+be possible for a syntax extension to add new keywords _and_ operators to the
+lexicon. For clarity, let's define those:
+
+Keyword: a sequence of word characters beginning with an alphabetic character.
+    Keywords are the same as identifiers, except for their treatment as a
+    special part of syntax.
+
+Operator: a sequence of non-word, non-numeric characters from the set:
+    []{}()/\|`~!?@#$%^&*-_=+:;,.<>
+
+    Operators are lexed slightly differently from keywords, in that they do not
+    need to be space-separated. If "+" and "-" are both operators, the string
+    "+-" is lexed as a "+" followed by a "-". However, if "+-" is an operator,
+    that symbol is recognized.
+
+So, a syntax extension needs to be able to attach derivations to arbitrary
+symbols. Say, for example:
+
+    syntax infix "not" {
+        // produce derivation
+    }
+
+    syntax suffix "++" {
+        // produce derivation
+    }
+
+How do we decide the manner in which to modify lexing rules in each of these
+two cases? In the first case, keyword lexing is probably intended, and in the
+second, operator lexing. "notfoo" should still be a valid identifier, but
+"++foo" should be (obviously) two tokens.
+
+One possible method would be to decide based on the characters contained in
+the specified symbol. However, we need to consider cases such as:
+
+    syntax prefix "not?" {
+        ...
+    }
+
+Should this be a keyword or an operator?
+
+A better option, actually, is to put the responsibility on the programmer to be
+clear about their intent:
+
+    syntax keyword infix "not" ...
+    syntax operator suffix "++" ...
+
+
+Lexing state
+------------
+
+Just given what we have so far, it's obvious that lexical rules are no longer
+static. Within a block operating under a syntax extension, new lexical rules
+are required. Outside that block, those rules need to go away.
+
+So, we need a "lexer stack" that corresponds with the stack of symbol tables
+used by the parser. When entering an area of custom syntax, push a new lexer
+that extends the one currently on the top of the stack.
+
+In the case of the parser, this is done with a stack of environments _within_
+a single parser. In the case of the lexer, though, it might make more sense
+for each lexer itself to be immutable, and have the parser just store a stack
+of lexers. When the parser encounters a syntax extension block, it creates a
+new lexer that extends the old one, and pushes it onto the stack of lexers.
+E.g.,
+
+    // just completed parsing syntax definition
+    lexers.push_back(lex::extend(lexers.back(), syntax.keywords, syntax.operators))
+
+
