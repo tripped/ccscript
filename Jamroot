@@ -1,0 +1,7 @@
+using gcc : : g++-4.5 ;
+
+exe ccc : src/main.cpp ;
+
+install bin : ccc
+
+# install bin : ccc : <target-os>windows:<location>"C:/Program Files/CCScript/bin" <target-os>linux:<location>/usr/local/bin ;
