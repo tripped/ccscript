@@ -8,11 +8,10 @@ lib gtest ;
 lib pthread ;
 
 # Executable targets
-exe ccc : src/main.cpp ;
-exe tests : src/testmain.cpp gtest pthread ;
+exe ccc : src/main.cpp gtest pthread ;
 
 # Just for convenience, put last built binary in top-level of bin/
-install bin : ccc tests ;
+install bin : ccc ;
 
 # Installation target
 install install : ccc :
