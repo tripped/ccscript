@@ -1,0 +1,15 @@
+#
+# SCons definition for the ccc compiler target
+#
+sources = Glob('*.cpp')
+libs = ['gtest', 'pthread']
+
+Import('env')
+env.Append(LIBS=libs)
+
+ccc = env.Program(target = 'ccc', source = sources)
+
+# Always run unit tests after a successful build
+test_alias = env.Alias('test', [ccc], ccc[0].abspath + ' --test')
+AlwaysBuild(test_alias)
+Default(test_alias)
